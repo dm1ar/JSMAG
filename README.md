@@ -1,4 +1,6 @@
 # JSMAG
+### Work in Progress -> Nothing to download !!!!
+
 ### JavaScript Morse Audio Generator
 
 A simple browser based Morse Code audio generator generated with ChatGPT-4o. 
