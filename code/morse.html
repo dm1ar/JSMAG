@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="DM1AR">
+  <meta name="date" content="2024-07-24">
+  <meta name="license" content="MIT License">
+  <title>Morse Code Player</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Morse Code Player</h1>
+    <textarea id="ascii-input" rows="5" cols="80" placeholder="ASCII-Text hier eingeben"></textarea>
+    <div class="buttons">
+      <button id="play-button" class="play">Abspielen</button>
+      <button id="stop-button" class="stop">STOP</button>
+    </div>
+    <div class="slider-container">
+      <label for="frequency-slider">Tonfrequenz: <span id="frequency-value">750</span> Hz</label>
+      <input type="range" id="frequency-slider" min="500" max="1200" step="50" value="750">
+    </div>
+    <div class="slider-container">
+      <label for="speed-slider">Morse-Geschwindigkeit: <span id="speed-value">20</span> WPM</label>
+      <input type="range" id="speed-slider" min="5" max="50" step="1" value="20">
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+
+</html>
