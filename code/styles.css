@@ -1,62 +1,133 @@
 /* 
- * Author: DM1AR
- * Date: 2024-07-24
- * License: MIT License
- */
+Autor: DM1AR
+Datum: 12. August 2024
+Lizenz: MIT-Lizenz
+*/
 
- body {
-  background-color: lightblue;
+/* Allgemeine Stile */
+body {
+  background: url('morse_background.webp') no-repeat center center fixed;
+  background-size: cover;
   font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
-.container {
+.layout {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.main-frame {
+  width: 50%;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  margin-top: 20px;
+  justify-content: space-between;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
 }
 
 h1 {
-  margin-bottom: 20px;
+  font-size: 2em;
+  font-weight: bold;
+  margin: 20px 0;
+  color: black;
+  text-align: center;
 }
 
-#ascii-input {
+.container {
+  padding: 20px;
+}
+
+.input-text {
+  width: 100%;
   background-color: lightyellow;
-  width: 80%;
   padding: 10px;
-  font-size: 16px;
-  margin-bottom: 20px;
+  font-size: 1em;
+  min-height: 100px;
+  border: 1px solid #ccc;
+  outline: none;
+  text-align: left;
 }
 
-.buttons {
+.input-text span.highlighted {
+  color: red;
+  font-weight: bold;
+}
+
+.controls {
+  margin: 20px 0;
   display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
+  justify-content: space-between;
 }
 
-button.play {
+.green-button, .red-button {
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 1em;
+  flex: 1;
+  margin: 0 10px;
+}
+
+.green-button {
   background-color: green;
   color: white;
-  padding: 10px 20px;
-  font-size: 16px;
-  border: none;
-  cursor: pointer;
 }
 
-button.stop {
+.red-button {
   background-color: red;
   color: white;
-  padding: 10px 20px;
-  font-size: 16px;
-  border: none;
-  cursor: pointer;
 }
 
 .slider-container {
-  margin-bottom: 20px;
-  width: 80%; /* Make the slider containers wider */
+  margin: 20px 0;
+}
+
+label {
+  font-size: 1em;
+  margin-right: 10px;
 }
 
 input[type="range"] {
-  width: 100%; /* Make the sliders fill the container width */
+  width: 100%;
+}
+
+.drop-area {
+  width: 100%;
+  height: 100px;
+  margin-top: 20px;
+  border: 2px dashed #ccc;
+  background-color: #f9f9f9;
+  line-height: 100px;
+  font-size: 1em;
+  color: #666;
+  text-align: center;
+}
+
+/* Prosigns Frame */
+.prosigns-frame {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20%;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-left: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.prosigns-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.prosigns-table th, .prosigns-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
 }

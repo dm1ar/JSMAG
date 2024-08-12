@@ -1,104 +1,250 @@
 /*
- * Author: DM1AR
- * Date: 2024-07-24
- * License: MIT License
- */
+Autor: DM1AR
+Datum: 12. August 2024
+Lizenz: MIT-Lizenz
+*/
 
-// Morse code dictionary using ITU standard
-const MORSE_CODE = {
-  'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.', 
-  'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..', 
-  'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.', 
-  'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-', 
-  'Y': '-.--', 'Z': '--..', 
-  '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....', 
-  '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----', 
-  '.': '.-.-.-', ',': '--..--', '?': '..--..', '\'': '.----.', '!': '-.-.--', 
-  '/': '-..-.', '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...', 
-  ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', '_': '..--.-', 
-  '"': '.-..-.', '$': '...-..-', '@': '.--.-.', ' ': ' '
-};
-
-// Main class for Morse code player
 class MorseCodePlayer {
-  constructor() {
-    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    this.isPlaying = false;
-    this.init();
-  }
-
-  // Initialize event listeners
-  init() {
-    document.getElementById('play-button').addEventListener('click', () => this.play());
-    document.getElementById('stop-button').addEventListener('click', () => this.stop());
-    document.getElementById('frequency-slider').addEventListener('input', (event) => this.updateFrequency(event));
-    document.getElementById('speed-slider').addEventListener('input', (event) => this.updateSpeed(event));
-  }
-
-  // Convert ASCII text to Morse code
-  textToMorse(text) {
-    return text.toUpperCase().split('').map(char => MORSE_CODE[char] || '').join(' ');
-  }
-
-  // Play Morse code audio
-  async play() {
-    if (this.isPlaying) return;
-    this.isPlaying = true;
-
-    const text = document.getElementById('ascii-input').value;
-    const morse = this.textToMorse(text);
-    const frequency = parseInt(document.getElementById('frequency-slider').value);
-    const wpm = parseInt(document.getElementById('speed-slider').value);
-    const dotDuration = 1200 / wpm;
-
-    for (let char of morse) {
-      if (!this.isPlaying) break;
-      if (char === '.') {
-        await this.playTone(frequency, dotDuration);
-      } else if (char === '-') {
-        await this.playTone(frequency, 3 * dotDuration);
-      }
-      await this.sleep(dotDuration);
+    constructor() {
+        this.morseCodeMap = this.createMorseCodeMap();
+        this.prosigns = ['AR', 'SK', 'BT', 'KN', 'SN', 'AS', 'VE', 'HH', 'CT', 'SOS'];
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.oscillator = null;
+        this.gainNode = this.audioContext.createGain();
+        this.gainNode.gain.setValueAtTime(0.8, this.audioContext.currentTime); // Set initial volume
+        this.isPlaying = false;
+        this.isLooping = false;
+        this.frequency = 750;
+        this.speed = 20;
+        this.farnsworthSpeed = 20;
+        this.volume = 0.8;
+        this.unitTime = 1200 / this.speed; // Zeit in ms für einen Punkt bei gegebener Geschwindigkeit
+        this.initializeUI();
     }
 
-    this.isPlaying = false;
-  }
+    // Initialisiert die UI-Elemente und deren Event-Handler
+    initializeUI() {
+        document.getElementById('playButton').addEventListener('click', () => this.playMorseCode());
+        document.getElementById('stopButton').addEventListener('click', () => this.stopMorseCode());
+        document.getElementById('loopButton').addEventListener('click', () => this.toggleLoop());
 
-  // Stop Morse code playback
-  stop() {
-    this.isPlaying = false;
-  }
+        document.getElementById('frequencySlider').addEventListener('input', (event) => {
+            this.frequency = event.target.value;
+            document.getElementById('frequencyValue').innerText = `${this.frequency} Hz`;
+        });
 
-  // Play a tone for the given duration
-  playTone(frequency, duration) {
-    return new Promise((resolve) => {
-      const oscillator = this.audioContext.createOscillator();
-      oscillator.frequency.value = frequency;
-      oscillator.connect(this.audioContext.destination);
-      oscillator.start();
+        document.getElementById('speedSlider').addEventListener('input', (event) => {
+            this.speed = event.target.value;
+            this.unitTime = 1200 / this.speed;
+            document.getElementById('speedValue').innerText = `${this.speed} WPM`;
+        });
 
-      setTimeout(() => {
-        oscillator.stop();
-        resolve();
-      }, duration);
-    });
-  }
+        document.getElementById('volumeSlider').addEventListener('input', (event) => {
+            this.volume = event.target.value;
+            this.gainNode.gain.setValueAtTime(this.volume, this.audioContext.currentTime);
+            document.getElementById('volumeValue').innerText = this.volume;
+        });
 
-  // Sleep for the given duration
-  sleep(duration) {
-    return new Promise(resolve => setTimeout(resolve, duration));
-  }
+        document.getElementById('farnsworthSlider').addEventListener('input', (event) => {
+            this.farnsworthSpeed = event.target.value;
+            document.getElementById('farnsworthValue').innerText = `${this.farnsworthSpeed} WPM`;
+        });
 
-  // Update frequency display
-  updateFrequency(event) {
-    document.getElementById('frequency-value').innerText = event.target.value;
-  }
+        this.initializeDropArea();
+    }
 
-  // Update speed display
-  updateSpeed(event) {
-    document.getElementById('speed-value').innerText = event.target.value;
-  }
+    // Initialisiert das Drop-File-Event für die Drop-Area
+    initializeDropArea() {
+        const dropArea = document.getElementById('dropArea');
+        
+        dropArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropArea.style.backgroundColor = '#e9e9e9';
+        });
+
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.style.backgroundColor = '#f9f9f9';
+        });
+
+        dropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropArea.style.backgroundColor = '#f9f9f9';
+            const files = event.dataTransfer.files;
+            if (files.length > 0 && files[0].type === 'text/plain') {
+                this.readFile(files[0]);
+            } else {
+                alert('Bitte laden Sie eine gültige .txt-Datei hoch.');
+            }
+        });
+    }
+
+    // Liest den Inhalt der hochgeladenen Datei und setzt ihn in das Eingabefeld
+    readFile(file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const text = event.target.result;
+            document.getElementById('inputText').innerText = text;
+        };
+        reader.readAsText(file);
+    }
+
+    // Erzeugt die Morsecode-Tabelle, einschließlich Prosigns
+    createMorseCodeMap() {
+        return {
+            'A': '.-',    'B': '-...',  'C': '-.-.',  'D': '-..',   'E': '.',
+            'F': '..-.',  'G': '--.',   'H': '....',  'I': '..',    'J': '.---',
+            'K': '-.-',   'L': '.-..',  'M': '--',    'N': '-.',    'O': '---',
+            'P': '.--.',  'Q': '--.-',  'R': '.-.',   'S': '...',   'T': '-',
+            'U': '..-',   'V': '...-',  'W': '.--',   'X': '-..-',  'Y': '-.--',
+            'Z': '--..',  '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+            '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
+            '0': '-----', '.': '.-.-.-', ',': '--..--', '?': '..--..', '\'': '.----.',
+            '!': '-.-.--', '/': '-..-.',  '(': '-.--.',  ')': '-.--.-', '&': '.-...',
+            ':': '---...', ';': '-.-.-.', '=': '-...-',  '+': '.-.-.',  '-': '-....-',
+            '_': '..--.-', '"': '.-..-.', '$': '...-..-', '@': '.--.-.', ' ': '/',
+            'AR': '.-.-.', 'SK': '...-.-', 'BT': '-...-', 'KN': '-.-.', 'SN': '...-.', 
+            'AS': '.-...', 'VE': '...-.', 'HH': '........', 'CT': '-.-.', 'SOS': '...---...'
+        };
+    }
+
+    // Wandelt ASCII in Morsecode um
+    convertToMorse(text) {
+        return text.toUpperCase()
+            .replace(/\s+/g, ' ') // Normalize spaces
+            .split(' ')
+            .map(word => word.split('')
+            .map(char => this.morseCodeMap[char] || '')
+            .join(' '))
+            .join(' / ');
+    }
+
+    // Hebt das aktuelle Zeichen hervor
+    highlightCurrentChar(index) {
+        const inputText = document.getElementById('inputText');
+        const text = inputText.innerText;
+        const beforeChar = text.slice(0, index);
+        const currentChar = text[index];
+        const afterChar = text.slice(index + 1);
+
+        inputText.innerHTML = beforeChar + `<span class="highlighted">${currentChar}</span>` + afterChar;
+    }
+
+    // Setzt das hervorgehobene Zeichen zurück
+    resetHighlighting() {
+        const inputText = document.getElementById('inputText');
+        inputText.innerHTML = inputText.innerText; // Entfernt alle HTML-Tags
+    }
+
+    // Spielt das Morsecode-Audio ab
+    async playMorseCode() {
+        if (this.isPlaying) return;
+        this.isPlaying = true;
+
+        const text = document.getElementById('inputText').innerText;
+        const morseCode = this.convertToMorse(text);
+        
+        do {
+            let i = 0;
+            while (i < text.length) {
+                if (!this.isPlaying) break;
+
+                this.highlightCurrentChar(i);
+                let char = text[i].toUpperCase();
+                let symbol = this.morseCodeMap[char] || '';
+                let isProsign = false;
+
+                if (i < text.length - 1) {
+                    let nextChar = text[i + 1].toUpperCase();
+                    if (this.prosigns.includes(char + nextChar)) {
+                        char += nextChar;
+                        symbol = this.morseCodeMap[char];
+                        isProsign = true;
+                        i++; // Skip the next character as it's part of the prosign
+                    }
+                }
+
+                for (const tone of symbol) {
+                    if (!this.isPlaying) break;
+
+                    switch (tone) {
+                        case '.':
+                            await this.playTone(this.unitTime);  // Ein Punkt (1 "dit")
+                            await this.pause(this.unitTime);     // Pause zwischen Signalen im gleichen Buchstaben (1 "dit")
+                            break;
+                        case '-':
+                            await this.playTone(this.unitTime * 3); // Ein Strich (3 "dits")
+                            await this.pause(this.unitTime);        // Pause zwischen Signalen im gleichen Buchstaben (1 "dit")
+                            break;
+                    }
+                }
+
+                if (!isProsign) {
+                    await this.pause(this.unitTime * 3);  // Pause zwischen Buchstaben (3 "dits")
+                } else {
+                    await this.pause(this.unitTime);  // Nur 1 "dit" Pause zwischen Buchstaben in Prosigns
+                }
+
+                if (symbol === '/') {
+                    const wordPause = this.calculateWordPause();
+                    await this.pause(wordPause);
+                }
+
+                i++;
+            }
+        } while (this.isLooping && this.isPlaying);
+
+        this.resetHighlighting();
+        this.isPlaying = false;
+    }
+
+    // Berechnet die richtige Pause zwischen Wörtern unter Berücksichtigung der Farnsworth-Geschwindigkeit
+    calculateWordPause() {
+        const standardWordPause = this.unitTime * 7;  // Standard-Pause (7 "dits" nach normaler Geschwindigkeit)
+        const farnsworthUnitTime = 1200 / this.farnsworthSpeed;
+        const farnsworthWordPause = farnsworthUnitTime * 7; // Farnsworth-Pause (7 "dits" nach Farnsworth-Speed)
+        return farnsworthWordPause > standardWordPause ? farnsworthWordPause : standardWordPause;
+    }
+
+    // Stoppt die Wiedergabe
+    stopMorseCode() {
+        this.isPlaying = false;
+        this.isLooping = false;
+        if (this.oscillator) {
+            this.oscillator.stop();
+        }
+        this.resetHighlighting();
+    }
+
+    // Schaltet das Endlos-Wiedergabe
+    toggleLoop() {
+        this.isLooping = !this.isLooping;
+        if (this.isLooping) {
+            this.playMorseCode();
+        }
+    }
+
+    // Spielt einen Ton ab
+    playTone(duration) {
+        return new Promise(resolve => {
+            this.oscillator = this.audioContext.createOscillator();
+            this.oscillator.frequency.setValueAtTime(this.frequency, this.audioContext.currentTime);
+            this.oscillator.connect(this.gainNode);
+            this.gainNode.connect(this.audioContext.destination);
+            this.oscillator.start();
+            setTimeout(() => {
+                this.oscillator.stop();
+                resolve();
+            }, duration);
+        });
+    }
+
+    // Führt eine Pause durch
+    pause(duration) {
+        return new Promise(resolve => setTimeout(resolve, duration));
+    }
 }
 
-// Instantiate MorseCodePlayer on page load
-document.addEventListener('DOMContentLoaded', () => new MorseCodePlayer());
+// Initialisiert den MorseCodePlayer nach dem Laden der Seite
+window.addEventListener('DOMContentLoaded', () => {
+    new MorseCodePlayer();
+});
