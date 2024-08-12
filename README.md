@@ -66,6 +66,4 @@ Contributions are welcome! Please open an issue or submit a pull request for any
 - This project was developed as a tool for learning and practicing AI generated programming. And of course Morse Code!
 - Inspiration for the design and functionality was drawn from various online resources and the needs of the amateur radio community.
 
----
 
-Feel free to customize this README further to suit your specific needs and repository structure.
