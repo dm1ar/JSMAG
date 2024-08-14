@@ -8,7 +8,7 @@
 
 Erstelle ein Programm in Javascript.    
 Verwende die Google JavaScript-Programmierrichtlinien.  
-Füge Dateikopfzeilen mit Autor (DM1AR), Datum und Lizenzinformationen (MIT-Lizenz) hinzu.   
+Füge Dateikopfzeilen mit Autor "Your Callsign", Datum und Lizenzinformationen (MIT-Lizenz) hinzu.   
 Kommentiere den Code auf Deutsch.   
 Erzeuge Objektorientierten Code (OOP) mit Klassen und Methoden.   
 Warte zuerst auf die Anforderungen.
