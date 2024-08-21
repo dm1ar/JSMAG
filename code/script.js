@@ -20,6 +20,7 @@ class MorseCodePlayer {
         this.volume = 0.8;
         this.unitTime = 1200 / this.speed; // Zeit in ms für einen Punkt bei gegebener Geschwindigkeit
         this.initializeUI();
+        this.updateDiagnostics();
     }
 
     // Initialisiert die UI-Elemente und deren Event-Handler
@@ -27,6 +28,7 @@ class MorseCodePlayer {
         document.getElementById('playButton').addEventListener('click', () => this.playMorseCode());
         document.getElementById('stopButton').addEventListener('click', () => this.stopMorseCode());
         document.getElementById('loopButton').addEventListener('click', () => this.toggleLoop());
+        document.getElementById('clearButton').addEventListener('click', () => this.clearInput());
 
         document.getElementById('frequencySlider').addEventListener('input', (event) => {
             this.frequency = event.target.value;
@@ -37,6 +39,7 @@ class MorseCodePlayer {
             this.speed = event.target.value;
             this.unitTime = 1200 / this.speed;
             document.getElementById('speedValue').innerText = `${this.speed} WPM`;
+            this.updateDiagnostics();
         });
 
         document.getElementById('volumeSlider').addEventListener('input', (event) => {
@@ -48,6 +51,11 @@ class MorseCodePlayer {
         document.getElementById('farnsworthSlider').addEventListener('input', (event) => {
             this.farnsworthSpeed = event.target.value;
             document.getElementById('farnsworthValue').innerText = `${this.farnsworthSpeed} WPM`;
+            this.updateDiagnostics();
+        });
+
+        document.getElementById('inputText').addEventListener('input', () => {
+            this.updateDiagnostics();
         });
 
         this.initializeDropArea();
@@ -84,6 +92,7 @@ class MorseCodePlayer {
         reader.onload = (event) => {
             const text = event.target.result;
             document.getElementById('inputText').innerText = text;
+            this.updateDiagnostics();
         };
         reader.readAsText(file);
     }
@@ -223,6 +232,12 @@ class MorseCodePlayer {
         }
     }
 
+    // Löscht das Eingabefeld und die Diagnostik
+    clearInput() {
+        document.getElementById('inputText').innerText = '';
+        this.updateDiagnostics();
+    }
+
     // Spielt einen Ton ab
     playTone(duration) {
         return new Promise(resolve => {
@@ -241,6 +256,48 @@ class MorseCodePlayer {
     // Führt eine Pause durch
     pause(duration) {
         return new Promise(resolve => setTimeout(resolve, duration));
+    }
+
+    // Aktualisiert die diagnostischen Informationen
+    updateDiagnostics() {
+        const text = document.getElementById('inputText').innerText.trim();
+        const morseCode = this.convertToMorse(text);
+        const charCount = morseCode.replace(/\s+/g, '').length;
+        
+        // Calculate word spaces based on Farnsworth speed
+        const wordCount = (text.match(/\s+/g) || []).length;
+        const totalWordPause = wordCount * this.calculateWordPause();
+        
+        // Calculate transmission duration
+        const transmissionDuration = ((charCount * this.unitTime) + totalWordPause) / 1000;
+
+        const shannonEntropy = this.calculateShannonEntropy(text);
+
+        document.getElementById('charCount').innerText = `Anzahl der Morse-Zeichen (dits & dahs & Pausen): ${charCount}`;
+        document.getElementById('transmissionDuration').innerText = `Dauer der Übertragung: ${transmissionDuration.toFixed(2)} Sekunden`;
+        document.getElementById('shannonEntropy').innerText = `Shannon-Entropie (Informationsgehalt): ${shannonEntropy.toFixed(2)}`;
+    }
+
+    // Berechnet die Shannon-Entropie
+    calculateShannonEntropy(text) {
+        const freq = {};
+        const len = text.length;
+
+        for (let i = 0; i < len; i++) {
+            const char = text[i];
+            if (!freq[char]) {
+                freq[char] = 0;
+            }
+            freq[char]++;
+        }
+
+        let entropy = 0;
+        for (let char in freq) {
+            const p = freq[char] / len;
+            entropy -= p * Math.log2(p);
+        }
+
+        return entropy;
     }
 }
 
