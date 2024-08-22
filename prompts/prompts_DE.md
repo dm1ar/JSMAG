@@ -27,5 +27,18 @@ Pause zwischen Symbolen ist ein "dit".
 Pause zwischen Zeichen sind 3 "dit".  
 Pause zwischen Wörtern (ein oder mehrere Leerzeichen) sind 7 "dit".
 
+## Erweiterungen
+Hat man einmal ein initiales Programm erstellt fallen einem sofort viele zusätzliche Funktionen ein, die man haben will.
+Dafür können wir dann einfache weitere Prompts eingeben, aber formulieren Sie das selbst, am besten iterativ und jeweils testen.
 
+- Ein Lautstärkeregler
+- Farnsworth-Timing, wobei wir den Link als Referenz in ChatGPT eingeben können.
+- Funkverkehrszeichen (Prosigns) mit korrektem Timing
+- Anzeigen der Prosign Tabelle
+- Erweiterung um eine Endlos-Funktion
+- Ablage von beliebigen Text – Dateien zum Abspielen
+- Anzeigen des gerade abgespielten Zeichens
+- Background mit einem ChatGPT generiertem Bild
+- Diagnose Fenster mit Zählern und Zeitdauer
+- Download des generierten Audios als .wav File
 
